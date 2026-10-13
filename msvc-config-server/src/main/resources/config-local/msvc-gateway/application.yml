@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: msvc-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: msvc-users
+          uri: lb://msvc-users
+          predicates:
+            - Path=/api/users/**
+        - id: msvc-tasks
+          uri: lb://msvc-tasks
+          predicates:
+            - Path=/api/tasks/**
+        - id: msvc-notifications
+          uri: lb://msvc-notifications
+          predicates:
+            - Path=/api/notifications/**
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka   # ← Apunta al Eureka Server
