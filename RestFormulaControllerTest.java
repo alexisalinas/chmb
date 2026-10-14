@@ -12,12 +12,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.banamex.app.controller.RestFormulaController;
+import com.banamex.app.model.EvaluateFormulaRequest;
+import com.banamex.app.model.EvaluateFormulaResponse;
+import com.banamex.app.model.SearchEvaluateFormulaRequest;
+import com.banamex.app.service.EvaluateFormulaService;
+
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Unit tests for {@link RestFormulaController}.
@@ -44,8 +50,8 @@ class RestFormulaControllerTest {
     @Test
     void evaluate_ShouldReturnOk_WhenRequestIsValid() throws Exception {
         EvaluateFormulaRequest innerRequest = new EvaluateFormulaRequest();
-        innerRequest.setFormula("testFormula");
-        innerRequest.setChannel("testChannel");
+        innerRequest.setChannelCode("testChannel");
+        innerRequest.setEvaluationResult("testFormula");
         SearchEvaluateFormulaRequest searchRequest = new SearchEvaluateFormulaRequest();
         searchRequest.setEvaluateFormulaRequest(innerRequest);
 
@@ -89,14 +95,14 @@ class RestFormulaControllerTest {
 
     /**
      * Test method for {@link RestFormulaController#evaluate(SearchEvaluateFormulaRequest)}.
-     * Given: A SearchEvaluateFormulaRequest where the inner formula is null.
+     * Given: A SearchEvaluateFormulaRequest where the inner evaluation result is null.
      * When: The evaluate endpoint is called.
      * Then: HTTP 400 Bad Request is returned.
      */
     @Test
     void evaluate_ShouldReturnBadRequest_WhenFormulaIsNull() throws Exception {
         EvaluateFormulaRequest innerRequest = new EvaluateFormulaRequest();
-        innerRequest.setFormula(null);
+        innerRequest.setEvaluationResult(null);
         SearchEvaluateFormulaRequest searchRequest = new SearchEvaluateFormulaRequest();
         searchRequest.setEvaluateFormulaRequest(innerRequest);
 

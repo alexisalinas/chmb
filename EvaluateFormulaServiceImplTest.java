@@ -18,7 +18,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.banamex.app.model.EvaluateFormulaRequest;
+import com.banamex.app.model.EvaluateFormulaResponse;
 import com.banamex.app.service.impl.EvaluateFormulaServiceImpl;
+import com.banamex.app.task.EvaluateFormulaTask;
 import com.banamex.cops.commons.errors.model.BadRequestException;
 
 /**
@@ -46,8 +49,8 @@ class EvaluateFormulaServiceImplTest {
     @Test
     void invoke_ShouldReturnSuccessResponse_WhenTaskSucceeds() throws Exception {
         EvaluateFormulaRequest request = new EvaluateFormulaRequest();
-        request.setChannel("testChannel");
-        request.setFormula("testFormula");
+        request.setChannelCode("testChannel");
+        request.setEvaluationResult("testFormula");
         when(task.invoke("testChannel", "testFormula")).thenReturn("resultValue");
 
         EvaluateFormulaResponse response = service.invoke(request);
@@ -61,15 +64,15 @@ class EvaluateFormulaServiceImplTest {
 
     /**
      * Test method for {@link EvaluateFormulaServiceImpl#invoke(EvaluateFormulaRequest)}.
-     * Given: A request whose formula is null.
+     * Given: A request whose evaluation result (formula) is null.
      * When: The service invoke method is called.
      * Then: A BadRequestException is thrown and the task is never invoked.
      */
     @Test
     void invoke_ShouldThrowBadRequestException_WhenFormulaIsNull() throws Exception {
         EvaluateFormulaRequest request = new EvaluateFormulaRequest();
-        request.setChannel("testChannel");
-        request.setFormula(null);
+        request.setChannelCode("testChannel");
+        request.setEvaluationResult(null);
 
         assertThrows(BadRequestException.class, () -> service.invoke(request));
 
