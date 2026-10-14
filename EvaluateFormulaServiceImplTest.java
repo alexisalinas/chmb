@@ -1,13 +1,25 @@
+package com.banamex.app;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import java.io.IOException;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+
+import com.banamex.app.service.impl.EvaluateFormulaServiceImpl;
+import com.banamex.cops.commons.errors.model.BadRequestException;
 
 /**
  * Unit tests for {@link EvaluateFormulaServiceImpl}.
@@ -16,14 +28,14 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class EvaluateFormulaServiceImplTest {
 
+    // Debe coincidir con la constante usada en EvaluateFormulaServiceImpl
+    private static final String EVALUATE_SUCCESS_MSG = "Evaluate successful";
+
     @Mock
     private EvaluateFormulaTask task;
 
     @InjectMocks
     private EvaluateFormulaServiceImpl service;
-
-    // Debe coincidir con la constante usada en EvaluateFormulaServiceImpl
-    private static final String EVALUATE_SUCCESS_MSG = "Evaluate successful";
 
     /**
      * Test method for {@link EvaluateFormulaServiceImpl#invoke(EvaluateFormulaRequest)}.
@@ -81,6 +93,7 @@ class EvaluateFormulaServiceImplTest {
         assertNotNull(response);
         assertEquals("500", response.getCode());
         assertEquals("", response.getValue());
+        // Copia aquí el texto exacto que aparece en "but was" si el mensaje de la clase cambió
         assertEquals("The evaluate formul can't by process.", response.getDescription());
     }
 }
