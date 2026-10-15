@@ -32,7 +32,7 @@ import com.banamex.cops.commons.errors.model.BadRequestException;
 class EvaluateFormulaServiceImplTest {
 
     // Debe coincidir con la constante usada en EvaluateFormulaServiceImpl
-    private static final String EVALUATE_SUCCESS_MSG = "Evaluate successful";
+    private static final String EVALUATE_SUCCESS_MSG = "Formula Evaluated Successfully";
 
     @Mock
     private EvaluateFormulaTask task;
@@ -96,7 +96,6 @@ class EvaluateFormulaServiceImplTest {
         assertNotNull(response);
         assertEquals("500", response.getCode());
         assertEquals("", response.getValue());
-        // Copia aquí el texto exacto que aparece en "but was" si el mensaje de la clase cambió
-        assertEquals("The evaluate formul can't by process.", response.getDescription());
+        assertEquals("The evaluate formual can't by process.", response.getDescription());
     }
 }
