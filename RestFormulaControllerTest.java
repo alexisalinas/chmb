@@ -10,12 +10,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.banamex.app.controller.RestFormulaController;
 import com.banamex.app.model.EvaluateFormulaRequest;
@@ -24,22 +27,29 @@ import com.banamex.app.model.SearchEvaluateFormulaRequest;
 import com.banamex.app.service.EvaluateFormulaService;
 
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Unit tests for {@link RestFormulaController}.
- * This class tests the REST endpoints using MockMvc to simulate HTTP requests.
+ * This class tests the REST endpoints using MockMvc in standalone mode (without loading Spring context).
  */
-@WebMvcTest(RestFormulaController.class)
+@ExtendWith(MockitoExtension.class)
 class RestFormulaControllerTest {
 
-    @Autowired
+    private final ObjectMapper objectMapper = JsonMapper.builder().build();
+
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockitoBean
+    @Mock
     private EvaluateFormulaService service;
+
+    @InjectMocks
+    private RestFormulaController controller;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
 
     /**
      * Test method for {@link RestFormulaController#evaluate(SearchEvaluateFormulaRequest)}.
