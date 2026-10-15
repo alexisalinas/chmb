@@ -2,9 +2,7 @@ package com.banamex.app;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,7 +20,6 @@ import com.banamex.app.model.EvaluateFormulaRequest;
 import com.banamex.app.model.EvaluateFormulaResponse;
 import com.banamex.app.service.impl.EvaluateFormulaServiceImpl;
 import com.banamex.app.task.EvaluateFormulaTask;
-import com.banamex.cops.commons.errors.model.BadRequestException;
 
 /**
  * Unit tests for {@link EvaluateFormulaServiceImpl}.
@@ -64,19 +61,25 @@ class EvaluateFormulaServiceImplTest {
 
     /**
      * Test method for {@link EvaluateFormulaServiceImpl#invoke(EvaluateFormulaRequest)}.
-     * Given: A request whose evaluation result (formula) is null.
+     * Given: A request whose evaluation result (formula) is null and a task that returns null.
      * When: The service invoke method is called.
-     * Then: A BadRequestException is thrown and the task is never invoked.
+     * Then: The service does not validate the formula, so it delegates to the task
+     * and returns a response with a null value.
      */
     @Test
-    void invoke_ShouldThrowBadRequestException_WhenFormulaIsNull() throws Exception {
+    void invoke_ShouldReturnResponseWithNullValue_WhenFormulaIsNull() throws Exception {
         EvaluateFormulaRequest request = new EvaluateFormulaRequest();
         request.setChannelCode("testChannel");
         request.setEvaluationResult(null);
+        when(task.invoke("testChannel", null)).thenReturn(null);
 
-        assertThrows(BadRequestException.class, () -> service.invoke(request));
+        EvaluateFormulaResponse response = service.invoke(request);
 
-        verify(task, never()).invoke(anyString(), anyString());
+        assertNotNull(response);
+        assertEquals("", response.getCode());
+        assertNull(response.getValue());
+        assertEquals(EVALUATE_SUCCESS_MSG, response.getDescription());
+        verify(task, times(1)).invoke("testChannel", null);
     }
 
     /**
