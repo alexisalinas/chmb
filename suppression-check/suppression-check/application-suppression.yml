@@ -1,0 +1,3 @@
+cop:
+  suppression:
+    check-for-suppression: "Y"
