@@ -1,35 +1,37 @@
+package com.banamex.cops.service.timezonevalidation;
+
+import com.banamex.cops.dto.timezonevalidation.TimeZoneValidationFormats;
+import com.banamex.cops.dto.timezonevalidation.TimeZoneValidationGetVariableRoot;
+import com.banamex.cops.dto.timezonevalidation.TimeZoneValidationStartRoot;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 /**
  * Equivalente al Assign "InitTZ" de BW/Common/TimeZoneValidation.
- *
- * XPath original:
- *   $GetVariable/root/LookUp[SystemName=$Start/root/System
- *                        and $Start/root/SysMode=Mode
- *                        and $Start/root/Type=Type]/<campo>
+ * Devuelve vacío cuando no hay coincidencia (rama "Otherwise" -> LookupTZ).
  */
 @Component
 public class InitTZ {
 
-    public TimeZoneValidationFormats execute(TimeZoneValidationStartRoot start,
-                                             TimeZoneValidationGetVariableRoot getVariable) {
+    public Optional<TimeZoneValidationFormats> execute(TimeZoneValidationStartRoot start,
+                                                       TimeZoneValidationGetVariableRoot getVariable) {
 
-        TimeZoneValidationGetVariableLookUp lookUp = getVariable.getLookUp().stream()
+        if (getVariable == null || getVariable.getLookUp() == null) {
+            return Optional.empty();
+        }
+
+        return getVariable.getLookUp().stream()
                 .filter(l -> start.getSystem().equals(l.getSystemName())
                           && start.getSysMode().equals(l.getMode())
                           && start.getType().equals(l.getType()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "No existe LookUp para system=" + start.getSystem()
-                        + ", sysMode=" + start.getSysMode()
-                        + ", type=" + start.getType()));
-
-        return TimeZoneValidationFormats.builder()
-                .timeOffset(lookUp.getTimeOffset())
-                .dateFormat(lookUp.getDateFormat())
-                .timeFormat(lookUp.getTimeFormat())
-                .dateTimeFormat(lookUp.getDateTimeFormat())
-                .timeZone(lookUp.getTimeZone())
-                .build();
+                .map(l -> TimeZoneValidationFormats.builder()
+                        .timeOffset(l.getTimeOffset())
+                        .dateFormat(l.getDateFormat())
+                        .timeFormat(l.getTimeFormat())
+                        .dateTimeFormat(l.getDateTimeFormat())
+                        .timeZone(l.getTimeZone())
+                        .build());
     }
 }
