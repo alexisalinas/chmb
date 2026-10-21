@@ -1,0 +1,6 @@
+update-offer:
+  logging:
+    audit-points-enabled: "1"
+    application-name: COPS
+    application-csi-id: "163621"
+    component-name: UpdateOffer

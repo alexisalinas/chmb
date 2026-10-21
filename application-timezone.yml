@@ -1,0 +1,4 @@
+update-offer:
+  timezone:
+    ecrm-time-zone: America/Mexico_City
+    time-zone-date-time-format: "yyyy-MM-dd'T'HH:mm:ssZ"
