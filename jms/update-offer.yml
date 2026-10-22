@@ -1,0 +1,128 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: servlet
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+  application:
+    name: update-offer
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+# Requerido por el conector EMS
+CONSUMER_APP: update-offer
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+    metrics:
+      enabled: true
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: '*'
+  health:
+    default:
+      enabled: true
+
+digital-engineering:
+  exception:
+    handler:
+      global:
+        enabled: 'true'
+  logger:
+    headers:
+      enabled: 'true'
+
+logging:
+  pattern:
+    level: '[%X{data}%thread] [%X{X-B3-TraceId:-}] - %5p'
+  level:
+    org.springframework.web: DEBUG
+    com.banamex.cops: DEBUG
+    com.tibco: DEBUG
+
+# Usado por EmsSender (cola de envio y espera de respuesta)
+update-offer:
+  ems:
+    queue: citi.gcg.lac.cop_163621.MX_dm.raw.cops-offer-fulfillment-req
+    timeout-seconds: 30
+
+# ==========================================================
+# LIBRERIA MAFIM EMS (prefijo: digital-integration.messaging.jms)
+# ==========================================================
+digital-integration:
+  messaging:
+    jms:
+      # broker-config no es de la libreria: solo agrupa valores para reusarlos con ${...}
+      broker-config:
+        username: "rmx_dev_usr"
+        password: "rmxusr"
+        sessionCacheSize: 10
+        receiveTimeout: 30000
+        ssl:
+          # CAMBIAR por el .jks emitido por CA1 G2 DEV o CA1 G3 DEV cuando lo entreguen
+          identity: "C:/Users/AS82906/certs/rmx_ist_usr.cal.cert.jks"
+          identityEncoding: "JKS"
+          password: "rmxusr"
+          debugTrace: false
+          trace: false
+          vendor: "j2se"
+          # Solo para pruebas: desactivan la validacion del host del servidor
+          enableVerifyHost: false
+          enableVerifyHostName: false
+
+      platforms:
+        - platformId: "banamex-cops"
+          enabled: true
+          primary: 1
+          contingency: 0
+          connections:
+            - id: "ems-update-offer-1"
+              datacenter: 10
+              readyToServe: true
+              name: "EmsConnectionUpdateOffer"
+              # Debe coincidir con el @Bean y el @Qualifier de JmsConfig / EmsSender
+              jmsTemplateName: "updateOfferJmsTemplate"
+              brokerUrl: "ssl://mwlgc-tibla04d.lac.nsroot.net:53143"
+              username: ${digital-integration.messaging.jms.broker-config.username}
+              password: ${digital-integration.messaging.jms.broker-config.password}
+              sessionCacheSize: ${digital-integration.messaging.jms.broker-config.sessionCacheSize}
+              receiveTimeout: ${digital-integration.messaging.jms.broker-config.receiveTimeout}
+              ssl:
+                identity: ${digital-integration.messaging.jms.broker-config.ssl.identity}
+                identityEncoding: ${digital-integration.messaging.jms.broker-config.ssl.identityEncoding}
+                password: ${digital-integration.messaging.jms.broker-config.ssl.password}
+                debugTrace: ${digital-integration.messaging.jms.broker-config.ssl.debugTrace}
+                trace: ${digital-integration.messaging.jms.broker-config.ssl.trace}
+                vendor: ${digital-integration.messaging.jms.broker-config.ssl.vendor}
+                enableVerifyHost: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHost}
+                enableVerifyHostName: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHostName}
+
+      # queues-config es una lista aparte de platforms (campo queuesConfig de JmsProperties)
+      queues-config:
+        - platformId: "banamex-cops"
+          post:
+            - csi: 10
+              queues:
+                - channel: update-offer
+                  queue:
+                    # queue es una lista: cada elemento lleva guion
+                    - send: citi.gcg.lac.cop_163621.MX_dm.raw.cops-offer-fulfillment-req
+
+    security:
+      allowed-ip-addresses: "0:0:0:0:0:0:0:1,10.0.0.0/8,127.0.0.1"
+      path-secured: /api/private/v1/information-technologies/ems/messages/connector/**
+      actuator-path: /actuator/**
