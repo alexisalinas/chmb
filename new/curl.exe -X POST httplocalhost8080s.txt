@@ -1,0 +1,5 @@
+   curl.exe -X POST "http://localhost:8080/sd-campaing-management/v1/update-offer" `
+     -H "Content-Type: application/json" -H "Accept: application/json" `
+     -H "uuid: 123e4567-e89b-12d3-a456-426614174000" -H "ChannelId: CAT" `
+     -H "sid: abc123" -H "countryCode: MX" -H "businessCode: COP" `
+     -d '[{\"channelCode\":\"CAT\",\"campaignId\":\"C1\",\"waveId\":\"W1\",\"customerId\":\"123\",\"cardNumber\":\"1234567812345678\",\"userText\":\"{\\\"userField1\\\":\\\"hola\\\"}\"}]'
