@@ -78,11 +78,11 @@ update-offer:
     user-id: ATM
     country-code: MX
     session-language-code: ES
-  # COP/Padding/CustomerPadding (CustomerNO)
+  # Globales de BW COP/Padding (CustomerNO en el JMS Queue Requestor)
   jms-requestor:
-    customer-padding: true
-    customer-padding-length: 10
-    customer-padding-char: "0"
+    customer-padding: true                  # COP/Padding/CustomerPadding
+    customer-padding-length: 10             # COP/Padding/CustomerNo  (longitud de tib:pad-front)
+    customer-padding-char: "0"              # COP/Padding/PadCharacter
   # TimeZoneMapRequest
   timezone:
     translate-time-zone: false              # BW: COP/TimeZone/TranslateTimeZone
@@ -154,6 +154,13 @@ digital-integration:
               password: ${digital-integration.messaging.jms.broker-config.password}
               sessionCacheSize: ${digital-integration.messaging.jms.broker-config.sessionCacheSize}
               receiveTimeout: ${digital-integration.messaging.jms.broker-config.receiveTimeout}
+              # Intentos de conexion / reconexion (la libreria hace unboxing: si faltan -> NullPointerException)
+              connAttemptCount: 3
+              connAttemptDelay: 1000
+              connAttemptTimeout: 5000
+              reconnAttemptCount: 3
+              reconnAttemptDelay: 1000
+              reconnAttemptTimeout: 5000
               ssl:
                 identity: ${digital-integration.messaging.jms.broker-config.ssl.identity}
                 identityEncoding: ${digital-integration.messaging.jms.broker-config.ssl.identityEncoding}
