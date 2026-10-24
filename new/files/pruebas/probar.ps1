@@ -1,25 +1,20 @@
-# Uso (PowerShell, desde esta carpeta):  .\probar.ps1
+# Uso (PowerShell, desde cualquier carpeta):  .\probar.ps1
+# Muestra el codigo HTTP, los headers y el CUERPO de la respuesta (tambien cuando es 400).
 # Con la app corriendo y update-offer.ems.dry-run: true, el XML se imprime en la consola de STS.
 
-$url = "http://localhost:8080/sd-campaing-management/v1/update-offer"
+$url  = "http://localhost:8080/sd-campaing-management/v1/update-offer"
+$uuid = [guid]::NewGuid().ToString()
+$json = Join-Path $PSScriptRoot "request-ejemplo.json"
 
-$headers = @{
-    "Content-Type" = "application/json"
-    "Accept"       = "application/json"
-    "uuid"         = [guid]::NewGuid().ToString()
-    "ChannelId"    = "CAT"
-    "sid"          = "sid-prueba-1"
-    "countryCode"  = "MX"
-    "businessCode" = "COP"
-    "Accept-Language" = "es-MX"
-}
+curl.exe -s -i -X POST $url `
+  -H "Content-Type: application/json" `
+  -H "Accept: application/json" `
+  -H "uuid: $uuid" `
+  -H "ChannelId: CAT" `
+  -H "sid: sid-prueba-1" `
+  -H "countryCode: MX" `
+  -H "businessCode: COP" `
+  -H "Accept-Language: es-MX" `
+  --data-binary "@$json"
 
-$body = Get-Content -Raw -Encoding UTF8 ".\request-ejemplo.json"
-
-try {
-    $resp = Invoke-RestMethod -Method Post -Uri $url -Headers $headers -Body $body
-    $resp | ConvertTo-Json -Depth 5
-} catch {
-    Write-Host "HTTP $($_.Exception.Response.StatusCode.value__)" -ForegroundColor Red
-    $_.ErrorDetails.Message
-}
+Write-Host ""
