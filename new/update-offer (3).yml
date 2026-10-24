@@ -5,25 +5,22 @@ spring:
   main:
     web-application-type: servlet
     lazy-initialization: true   # la conexion al EMS (y su certificado) solo se crea al usarla; quitar cuando el certificado funcione
-  autoconfigure:
-    exclude:
-      # Sin BD por ahora: la validacion de zona horaria esta apagada (translate-time-zone: false)
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
-      # La libreria cops-bd se registra sola con esta clase (JPA + JDBC) y necesita BD:
-      - com.banamex.cops.app.autoconfigure.CopsDbAutoConfiguration
-  # PARA USAR LA BD de cops-bd (COP_TIMEZONE_LOOKUP):
-  #  1) quita de arriba las 4 exclusiones (DataSource, Hibernate, DataSourceTransactionManager y CopsDbAutoConfiguration)
-  #  2) agrega el driver JDBC de tu BD al pom.xml (la libreria tambien usa JPA/Hibernate)
-  #  3) descomenta y completa esto:
-  # datasource:
-  #   url: ${DB_URL}
-  #   driver-class-name: ${DB_DRIVER}      # p. ej. oracle.jdbc.OracleDriver
-  #   username: ${DB_USER}
-  #   password: ${DB_PASSWORD}
-  #   hikari:
-  #     initialization-fail-timeout: -1
+  # BD UAT de cops (la libreria cops-bd se autoconfigura: JPA + JDBC). Oracle, servicio HAMXCPOZU.
+  datasource:
+    # ORA-12514 con servicio HAMXCPOZU -> se prueba como SID. Si falla, prueba (una a la vez):
+    #   servicio MXCPO2U : jdbc:oracle:thin:@//MXCPO2U.oraas.dyn.nsroot.net:8889/MXCPO2U
+    #   servicio HAMXCPOZU: jdbc:oracle:thin:@//MXCPO2U.oraas.dyn.nsroot.net:8889/HAMXCPOZU   (el que dio ORA-12514)
+    # o pide al DBA el SERVICE_NAME / SID exacto (lsnrctl services, tnsnames.ora, SQL Developer > propiedades)
+    url: ${DB_URL:jdbc:oracle:thin:@MXCPO2U.oraas.dyn.nsroot.net:8889:HAMXCPOZU}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${DB_USER:RMXCOP4}
+    password: ${DB_PASSWORD:c4D6zdL8,}      # mejor definir DB_PASSWORD como variable de entorno y no subir esto a git
+    hikari:
+      initialization-fail-timeout: -1       # no tumba el arranque si la BD no responde
+  jpa:
+    hibernate:
+      ddl-auto: none                        # la libreria no debe crear ni modificar tablas
+    open-in-view: false
   application:
     name: update-offer
   cloud:
@@ -76,8 +73,7 @@ update-offer:
     timeout-seconds: 30
     dry-run: true                           # true = solo escribe el XML en el log, NO envia al EMS. Poner false para enviar
     time-to-live-ms: 0                      # 0 = sin expiracion (BW: JMSExpiration)
-    body-element: UpdateOffer               # BW: _nm_
-    body-namespace: www.tibco.com/be/ontology/OfferEngine/Events/UpdateOffer   # BW: _ns_
+    body-element: UpdateOffer               # BW: _nm_ (nombre del elemento del cuerpo)
   # Valores del RqHeader que no vienen en los headers HTTP (uuid, ChannelId y countryCode si vienen de HTTP)
   header:
     version: "3.0"
