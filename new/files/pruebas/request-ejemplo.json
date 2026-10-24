@@ -1,0 +1,33 @@
+[
+  {
+    "channelCode": "CAT",
+    "campaignId": "CAMP001",
+    "waveId": "WAVE01",
+    "customerId": "12345678",
+    "accountNumber": "00112233445566",
+    "cardNumber": "1234567812345678",
+    "offerSource": "WEB",
+    "offerPriority": "1",
+    "assignedBy": "USER1",
+    "assignedTo": "AGENT1",
+    "appointmentDate": "2026-10-25",
+    "appointmentStartTime": "10:30:00",
+    "appointmentEndTime": "11:00:00",
+    "offeredNumber": "Y",
+    "offerStatus": "01",
+    "reasonCode": "R01",
+    "reasonDescription": "Prueba",
+    "comments": "Comentario de prueba",
+    "offerActionCode": "UPD",
+    "contactIndicatorNumber": "5555555555",
+    "customerReferenceNumber": "REF123",
+    "schemaVersion": "1.0",
+    "contactType": "PHONE",
+    "departmentName": "COPS",
+    "userText": "{\"userField1\":\"valor 1\",\"userField2\":\"valor 2\",\"userField30\":\"valor 30\",\"userField100\":\"valor 100\"}",
+    "contextType": [
+      { "contextType": "controlField1" },
+      { "contextType": "controlField2" }
+    ]
+  }
+]
