@@ -1,50 +1,52 @@
-# Requisitos para solicitar acceso a Kafka (Onboarding)
+Requisitos para solicitar acceso a Kafka (Onboarding)
 
-## Cómo se solicita
+CÓMO SE SOLICITA
+
 Se abre una tarjeta de Jira con estos datos:
 
-| Campo | Valor |
-|---|---|
-| **Proyecto** | MIATR |
-| **Tipo** | TASK |
-| **Summary** | Onboarding a Kafka - Proyecto (nombre del proyecto) |
-| **Target date** | Fecha esperada de liberación del proyecto |
-| **Labels** | KafkaMXOnboarding |
-| **Component/s** | Feature ID |
-| **Attachments** | Diagramas, esquemas, muestras, etc. |
-| **Description** | La información de abajo |
+Proyecto: MIATR
+Tipo: TASK
+Summary: Onboarding a Kafka - Proyecto (nombre del proyecto)
+Target date: Fecha esperada de liberación del proyecto
+Labels: KafkaMXOnboarding
+Component/s: Feature ID
+Attachments: Diagramas, esquemas, muestras, etc.
+Description: La información de abajo
 
-También se debe llenar el *Cuestionario para Onboarding de Kafka* (enlazado en Confluence).
+También se debe llenar el Cuestionario para Onboarding de Kafka (enlazado en Confluence).
 
-## Información obligatoria en la descripción
-1. **Puntos de contacto y DL** para comunicaciones futuras.
-2. **Diagrama de la solución** y explicación orientada a lo que se requiere de Kafka, lo más detallada posible.
-3. **Alineación con el Gobierno de eventos Kafka / API Governance** (si aplica, indicar si es Canal, Negocio o Utilería).
-4. **Si se usa para eventos de negocio** integrados con eportal.
-5. **Definición de tópicos** (cantidad, nombres, eventos, schemas), si ya existe. Si no, se puede definir durante la revisión.
-6. **Esquema de cada evento** en formato AVRO o JSON Schema.
-7. **Sistemas o aplicaciones a conectar** (TIBCO, microservicio, Mongo, etc.), para determinar si se usan conectores, clientes o REST Proxy.
-8. **Compatibilidad con SASL / SSL.**
-9. **Volumetría esperada** (TPS por evento o por tópico).
-10. **Tamaño de un evento** (B o KB).
-11. **Muestras de cada evento** (dummys).
-12. **Si ya hay algún flujo onboardeado** de ese equipo o aplicación.
-13. **Equipo que origina la solicitud.**
-14. **Nombre del proyecto.**
-15. **Si ya cuentan con FID/keytab o certificado** (la identidad con la que se conectan al cluster).
-16. **Modelo de replicación** considerado.
-17. **Plan detallado de Disaster Recovery.**
-18. **Fechas estimadas de despliegue** por ambiente.
-19. **Feature.**
+INFORMACIÓN OBLIGATORIA EN LA DESCRIPCIÓN
 
-## Qué pasa después
-- Se revisa la información y se agenda un **foro** para definir qué más se requiere, la viabilidad, la capacidad del cluster y el equipo que dará seguimiento (CTO, Personalization o Data).
-- Se crea otra tarjeta para el seguimiento del desarrollo (tópicos, conectores, etc.) en **DEV y SIT**.
-- Antes de ir a producción deben tener definido el **plan de DR** y comprometerse a probarlo cada año.
+1. Puntos de contacto y DL para comunicaciones futuras.
+2. Diagrama de la solución y explicación orientada a lo que se requiere de Kafka, lo más detallada posible.
+3. Alineación con el Gobierno de eventos Kafka / API Governance (si aplica, indicar si es Canal, Negocio o Utilería).
+4. Si se usa para eventos de negocio integrados con eportal.
+5. Definición de tópicos (cantidad, nombres, eventos, schemas), si ya existe. Si no, se puede definir durante la revisión.
+6. Esquema de cada evento en formato AVRO o JSON Schema.
+7. Sistemas o aplicaciones a conectar (TIBCO, microservicio, Mongo, etc.), para determinar si se usan conectores, clientes o REST Proxy.
+8. Compatibilidad con SASL / SSL.
+9. Volumetría esperada (TPS por evento o por tópico).
+10. Tamaño de un evento (B o KB).
+11. Muestras de cada evento (dummys).
+12. Si ya hay algún flujo onboardeado de ese equipo o aplicación.
+13. Equipo que origina la solicitud.
+14. Nombre del proyecto.
+15. Si ya cuentan con FID/keytab o certificado (la identidad con la que se conectan al cluster).
+16. Modelo de replicación considerado.
+17. Plan detallado de Disaster Recovery.
+18. Fechas estimadas de despliegue por ambiente.
+19. Feature.
 
-## Notas útiles
-- **Kstreams** está fuera de alcance, y **ksqlDB** solo se aprueba de forma excepcional.
-- Los permisos se manejan con **ACLs** ligadas al usuario (FID/cert), así que conviene tener ese dato listo desde el inicio.
-- Para dudas: correo/DL **BANAMEX MX Kafka Internal**.
+QUÉ PASA DESPUÉS
 
-Nota: el documento no aclara cuáles de los puntos son obligatorios además de los marcados en negritas, y como todos aparecen en negritas en la transcripción, lo más seguro es prepararlos todos. ¿Quieres que te arme una plantilla lista para copiar y pegar en la tarjeta de Jira?
+- Se revisa la información y se agenda un foro para definir qué más se requiere, la viabilidad, la capacidad del cluster y el equipo que dará seguimiento (CTO, Personalization o Data).
+- Se crea otra tarjeta para el seguimiento del desarrollo (tópicos, conectores, etc.) en DEV y SIT.
+- Antes de ir a producción deben tener definido el plan de DR y comprometerse a probarlo cada año.
+
+NOTAS ÚTILES
+
+- Kstreams está fuera de alcance, y ksqlDB solo se aprueba de forma excepcional.
+- Los permisos se manejan con ACLs ligadas al usuario (FID/cert), así que conviene tener ese dato listo desde el inicio.
+- Para dudas: correo/DL BANAMEX MX Kafka Internal.
+
+Nota: el documento no aclara cuáles de los puntos son obligatorios además de los marcados en negritas, y como todos aparecen en negritas en la transcripción, lo más seguro es prepararlos todos.
