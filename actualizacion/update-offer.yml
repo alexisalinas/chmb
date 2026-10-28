@@ -1,0 +1,201 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: servlet
+    lazy-initialization: true   # la conexion al EMS (y su certificado) solo se crea al usarla; quitar cuando el certificado funcione
+  # BD UAT de cops (la libreria cops-bd se autoconfigura: JPA + JDBC). Oracle, servicio HAMXCPOZU.
+  datasource:
+    # HAMXCPOZU dio ORA-12514 como servicio y ORA-12505 como SID: no es ninguno de los dos.
+    # Se prueba el nombre corto del host como servicio. Alternativas (una a la vez):
+    #   SID MXCPO2U      : jdbc:oracle:thin:@MXCPO2U.oraas.dyn.nsroot.net:8889:MXCPO2U
+    #   servicio con dominio (los servicios suelen llevarlo): jdbc:oracle:thin:@//MXCPO2U.oraas.dyn.nsroot.net:8889/<SERVICE_NAME>.<dominio>
+    # Lo seguro: pedir al DBA el SERVICE_NAME de UAT (lsnrctl services / tnsnames.ora / SQL Developer).
+    url: ${DB_URL:jdbc:oracle:thin:@//MXCPO2U.oraas.dyn.nsroot.net:8889/MXCPO2U}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${DB_USER:RMXCOP4}
+    password: ${DB_PASSWORD:c4D6zdL8,}      # mejor definir DB_PASSWORD como variable de entorno y no subir esto a git
+    hikari:
+      initialization-fail-timeout: -1       # no tumba el arranque si la BD no responde
+      connection-timeout: 5000              # falla en 5 s (antes esperaba 30 s)
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect   # evita que Hibernate consulte la BD al arrancar para detectarlo
+    properties:
+      hibernate:
+        boot:
+          allow_jdbc_metadata_access: false
+    hibernate:
+      ddl-auto: none                        # la libreria no debe crear ni modificar tablas
+    open-in-view: false
+  application:
+    name: chnn-cop-o-update-offer
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+# Requerido por el conector EMS
+CONSUMER_APP: chnn-cop-o-update-offer
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+    metrics:
+      enabled: true
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: '*'
+  health:
+    default:
+      enabled: true
+
+digital-engineering:
+  exception:
+    handler:
+      global:
+        enabled: 'true'
+  logger:
+    headers:
+      enabled: 'true'
+
+logging:
+  pattern:
+    level: '[%X{data}%thread] [%X{X-B3-TraceId:-}] - %5p'
+  level:
+    org.springframework.web: DEBUG
+    com.banamex.cops: DEBUG
+    com.tibco: DEBUG
+
+# Usado por EmsSender (cola de envio y espera de respuesta) y por UpdateOfferMapper
+update-offer:
+  ems:
+    queue: citi.gsg.la.cop_163621.MX_card.offer.update
+    timeout-seconds: 30
+    dry-run: true                           # true = solo escribe el XML en el log, NO envia al EMS. Poner false para enviar
+    time-to-live-ms: 0                      # 0 = sin expiracion (BW: JMSExpiration)
+    body-element: UpdateOffer               # BW: _nm_ (nombre del elemento del cuerpo)
+  # Valores del RqHeader que no vienen en los headers HTTP (uuid, ChannelId y countryCode si vienen de HTTP)
+  header:
+    version: "3.0"
+    org: Banamex
+    org-unit: COPS
+    channel-id: CAT
+    terminal-id: "1"
+    user-id: ATM
+    country-code: MX
+    session-language-code: ES
+  # Globales de BW COP/Padding (CustomerNO en el JMS Queue Requestor)
+  jms-requestor:
+    customer-padding: true                  # COP/Padding/CustomerPadding
+    customer-padding-length: 10             # COP/Padding/CustomerNo  (longitud de tib:pad-front)
+    customer-padding-char: "0"              # COP/Padding/PadCharacter
+  # TimeZoneMapRequest
+  timezone:
+    translate-time-zone: false              # BW: COP/TimeZone/TranslateTimeZone
+    system: COPS                            # Start/System (ajustar)
+    sys-mode: RT                            # Start/SysMode (ajustar)
+    invalid-code: COP_TZCOD_101             # supuesto
+    ecrm-time-zone: America/Mexico_City
+    time-zone-date-time-format: "yyyy-MM-dd'T'HH:mm:ssZ"
+  # LogRequestService / LoggingProperties
+  logging:
+    audit-points-enabled: "1"
+    application-name: COPS
+    application-csi-id: "163621"
+    component-name: UpdateOffer
+
+# AuditLogService (Log service request / response)
+audit:
+  enabled: true
+  application-id: cop_163621
+  component-name: COPS
+  country-code: MX
+  service-version: "1.0"
+  request-service-name: v3_0_0_0
+  response-service-name: Offer
+
+# PerformSuppressionCheck (COP/Suppression/CheckForSuppression)
+cop:
+  suppression:
+    check-for-suppression: "Y"
+
+# ==========================================================
+# LIBRERIA MAFIM EMS (prefijo: digital-integration.messaging.jms)
+# ==========================================================
+digital-integration:
+  messaging:
+    jms:
+      # broker-config no es de la libreria: solo agrupa valores para reusarlos con ${...}
+      broker-config:
+        username: "rmx_dev_usr"
+        password: "rmxusr"
+        sessionCacheSize: 10
+        receiveTimeout: 30000
+        ssl:
+          # CAMBIAR por el .jks emitido por CA1 G2 DEV o CA1 G3 DEV cuando lo entreguen
+          identity: "C:/Users/AS82906/certs/rmx_ist_usr.cal.cert.jks"
+          identityEncoding: "JKS"
+          password: "rmxusr"
+          debugTrace: false
+          trace: false
+          vendor: "j2se"
+          # Solo para pruebas: desactivan la validacion del host del servidor
+          enableVerifyHost: false
+          enableVerifyHostName: false
+
+      platforms:
+        - platformId: "banamex-cops"
+          enabled: true
+          primary: 1
+          contingency: 0
+          connections:
+            - id: "ems-update-offer-1"
+              datacenter: 10
+              readyToServe: true
+              name: "EmsConnectionUpdateOffer"
+              # Debe coincidir con el @Bean y el @Qualifier de JmsConfig / EmsSender
+              jmsTemplateName: "updateOfferJmsTemplate"
+              brokerUrl: "ssl://mwlgc-tibla04d.lac.nsroot.net:53143"
+              username: ${digital-integration.messaging.jms.broker-config.username}
+              password: ${digital-integration.messaging.jms.broker-config.password}
+              sessionCacheSize: ${digital-integration.messaging.jms.broker-config.sessionCacheSize}
+              receiveTimeout: ${digital-integration.messaging.jms.broker-config.receiveTimeout}
+              # Intentos de conexion / reconexion (la libreria hace unboxing: si faltan -> NullPointerException)
+              connAttemptCount: 3
+              connAttemptDelay: 1000
+              connAttemptTimeout: 5000
+              reconnAttemptCount: 3
+              reconnAttemptDelay: 1000
+              reconnAttemptTimeout: 5000
+              ssl:
+                identity: ${digital-integration.messaging.jms.broker-config.ssl.identity}
+                identityEncoding: ${digital-integration.messaging.jms.broker-config.ssl.identityEncoding}
+                password: ${digital-integration.messaging.jms.broker-config.ssl.password}
+                debugTrace: ${digital-integration.messaging.jms.broker-config.ssl.debugTrace}
+                trace: ${digital-integration.messaging.jms.broker-config.ssl.trace}
+                vendor: ${digital-integration.messaging.jms.broker-config.ssl.vendor}
+                enableVerifyHost: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHost}
+                enableVerifyHostName: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHostName}
+
+      # queues-config es una lista aparte de platforms (campo queuesConfig de JmsProperties)
+      queues-config:
+        - platformId: "banamex-cops"
+          post:
+            - csi: 10
+              queues:
+                - channel: update-offer
+                  queue:
+                    # queue es una lista: cada elemento lleva guion
+                    - send: citi.gsg.la.cop_163621.MX_card.offer.update
+
+    security:
+      allowed-ip-addresses: "0:0:0:0:0:0:0:1,10.0.0.0/8,127.0.0.1"
+      path-secured: /api/private/v1/information-technologies/ems/messages/connector/**
+      actuator-path: /actuator/**
