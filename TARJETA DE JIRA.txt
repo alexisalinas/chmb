@@ -1,8 +1,6 @@
-TARJETA DE JIRA
-
 Proyecto: MIATR
 Tipo: Task
-Summary: Onboarding a Kafka - Proyecto FulFillKafkaReceiver
+Summary: Onboarding a Kafka - Proyecto TIBCO EXIT
 Target date: [fecha esperada de liberación]
 Labels: KafkaMXOnboarding
 Component/s: [Feature ID]
@@ -32,7 +30,7 @@ Lo que se requiere de Kafka:
 - En caso de que sí, ¿es Canal, Negocio o Utilería? cops
 
 ¿Se usa para eventos de negocio y que se integren para comunicación con eportal?
-- [Sí / No]
+- No
 
 Definición de tópicos (cantidad, nombres, eventos, schemas)
 - Cantidad: 1
@@ -48,44 +46,41 @@ Sistemas o aplicaciones a los que se conectará
 - Tipo de conexión: Conectores (source) y [cliente Kafka para el microservicio, confirmar]
 
 ¿El sistema es compatible con SASL? SSL?
-- [Sí / No]
+- 
 
 Volumetría esperada en TPS, por evento o por tópico
-- [TPS]
+- 
 
 Tamaño de 1 evento (en B o KB)
-- [B / KB]
+- B / KB
 
 Muestras de cada evento - Dummys
-- [adjuntas]
+- 
 
 ¿Ya hay algún flujo onboardeado a Kafka de este equipo/aplicación?
-- Sí, el flujo actual con TIBCO ya usa el tópico y los conectores indicados arriba.
+- No hay uno en el equipo
 
 ¿De qué equipo proviene la solicitud?
 - COPS
 
 Nombre del proyecto
-- FulFillKafkaReceiver
+- TIBCO EXIT
 
 ¿Ya se cuenta con un FID/keytab o certificado?
-- [Sí (FID: ___) / No]
+- No
 
 ¿Se tiene en consideración el modelo de replicación?
-- Sí, el tópico inicia con lac.*, por lo que el replicator lo toma hacia COB.
 
 ¿Ya hay un plan detallado para ejercicios de Disaster Recovery?
 - [plan y compromiso de pruebas anuales]
 
 Fechas estimadas para despliegue, en cada ambiente
-- DEV: [fecha]
-- SIT: [fecha]
-- UAT: [fecha]
-- Perf: [fecha]
-- PROD: [fecha]
-- COB: [fecha]
-
+- DEV:
+- SIT: 
+- UAT: 
+- Perf:
+- PROD: 
+- COB: 
 Feature
-- [Feature ID]
+- 
 
-Nota: en la parte de Canal, Negocio o Utilería dejé "cops" como lo tenías, pero conviene cambiarlo a una de las tres opciones.
