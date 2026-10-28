@@ -1,0 +1,91 @@
+TARJETA DE JIRA
+
+Proyecto: MIATR
+Tipo: Task
+Summary: Onboarding a Kafka - Proyecto FulFillKafkaReceiver
+Target date: [fecha esperada de liberación]
+Labels: KafkaMXOnboarding
+Component/s: [Feature ID]
+Attachment: [diagrama EventHub Connectors and Topics, esquema del evento, muestras]
+
+DESCRIPTION
+
+Puntos de contacto y DL para comunicaciones futuras
+- dl.gcg.mx.tibco.exit.celula.cops@imcnam.ssmb.com
+
+Diagrama de la solución y una explicación orientada a lo requerido de Kafka, lo más detallado posible
+Se requiere migrar el proceso FulFillKafkaReceiver (COPS, TIBCO BW Processors) a un microservicio, manteniendo el flujo de eventos que hoy pasa por Kafka.
+
+Flujo actual:
+1. El proceso FulFillKafkaReceiver se comunica con un EMS mediante la cola citi.gcg.la.cop_163621.MX_dm.raw.cops-offer-fulfillment-req.
+2. Esa cola se integra con Event Hub (172254, formato Json/JMS) por medio de dos conectores Kafka: lac-ehmx-offer-fulfillment-req-source y lac-ehmx-offer-fulfillment-req-source-leg2.
+3. Los conectores publican los mensajes en el tópico lac.mx.dm.raw.cops-offer-fulfillment-req, que es el evento del flujo.
+
+Lo que se requiere de Kafka:
+- Mantener el tópico y los conectores actuales, sin cambios en su definición.
+- Dar acceso (usuario, certificado y ACLs) al microservicio que reemplazará al proceso TIBCO, para producir o consumir del tópico según corresponda.
+- Conservar la replicación a COB, ya que el tópico usa el prefijo lac.*.
+(Diagrama adjunto)
+
+¿Está la solución alineada con el Gobierno de eventos de Kafka/Api Governance?
+- Actualmente se utiliza en el proceso de TIBCO
+- En caso de que sí, ¿es Canal, Negocio o Utilería? cops
+
+¿Se usa para eventos de negocio y que se integren para comunicación con eportal?
+- [Sí / No]
+
+Definición de tópicos (cantidad, nombres, eventos, schemas)
+- Cantidad: 1
+- Nombre: lac.mx.dm.raw.cops-offer-fulfillment-req
+- Conectores: lac-ehmx-offer-fulfillment-req-source, lac-ehmx-offer-fulfillment-req-source-leg2
+- Schema: [referencia o "por definir"]
+
+Esquema de cada evento en formato AVRO o JSON schema
+- [AVRO / JSON Schema] (adjunto: [archivo])
+
+Sistemas o aplicaciones a los que se conectará
+- TIBCO (EMS) y microservicio
+- Tipo de conexión: Conectores (source) y [cliente Kafka para el microservicio, confirmar]
+
+¿El sistema es compatible con SASL? SSL?
+- [Sí / No]
+
+Volumetría esperada en TPS, por evento o por tópico
+- [TPS]
+
+Tamaño de 1 evento (en B o KB)
+- [B / KB]
+
+Muestras de cada evento - Dummys
+- [adjuntas]
+
+¿Ya hay algún flujo onboardeado a Kafka de este equipo/aplicación?
+- Sí, el flujo actual con TIBCO ya usa el tópico y los conectores indicados arriba.
+
+¿De qué equipo proviene la solicitud?
+- COPS
+
+Nombre del proyecto
+- FulFillKafkaReceiver
+
+¿Ya se cuenta con un FID/keytab o certificado?
+- [Sí (FID: ___) / No]
+
+¿Se tiene en consideración el modelo de replicación?
+- Sí, el tópico inicia con lac.*, por lo que el replicator lo toma hacia COB.
+
+¿Ya hay un plan detallado para ejercicios de Disaster Recovery?
+- [plan y compromiso de pruebas anuales]
+
+Fechas estimadas para despliegue, en cada ambiente
+- DEV: [fecha]
+- SIT: [fecha]
+- UAT: [fecha]
+- Perf: [fecha]
+- PROD: [fecha]
+- COB: [fecha]
+
+Feature
+- [Feature ID]
+
+Nota: en la parte de Canal, Negocio o Utilería dejé "cops" como lo tenías, pero conviene cambiarlo a una de las tres opciones.
