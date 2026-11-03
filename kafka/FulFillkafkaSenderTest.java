@@ -1,7 +1,8 @@
 package com.banamex.cops.update_offer.sender;
 
+import com.banamex.cops.app.model.CopOfferKafkaData;
 import com.banamex.cops.update_offer.kafka.KafkaMetrics;
-import com.banamex.cops.update_offer.kafka.OfferDataRepository;
+import com.banamex.cops.update_offer.kafka.OfferDataClient;
 import com.banamex.cops.update_offer.kafka.OfferInput;
 import com.banamex.cops.update_offer.kafka.OfferKafkaProps;
 import com.banamex.cops.update_offer.kafka.OfferKeyBuilder;
@@ -21,8 +22,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +45,7 @@ class FulFillkafkaSenderTest {
     private static final String WAVE_KEY = "wvch:W1:CAT";
     private static final Timestamp START = Timestamp.valueOf("2026-10-25 10:30:00");
 
-    @Mock OfferDataRepository repository;
+    @Mock OfferDataClient repository;
     @Mock OfferPublisher publisher;
     @Mock TaskExecutor executor;
 
@@ -77,23 +78,18 @@ class FulFillkafkaSenderTest {
                 .build();
     }
 
-    private Map<String, Object> dbRow() {
-        Map<String, Object> r = new HashMap<>();
-        r.put("PRDTYPE", "T");
-        r.put("REASONCODE", "R1");
-        r.put("REASONDESC", "motivo");
-        r.put("DESCRIPTION", "producto");
-        r.put("PRDCODE", "P1");
-        r.put("PRDFAMILY", "F1");
-        r.put("CRPCATEGORYID", "CAT1");
-        r.put("FULFILLMENTPROCID", "FP1");
-        r.put("AVAILABILITY", "Y");
-        r.put("APPTSTARTDATE_TM", START);
-        r.put("EXPIRYDATE_TM", Timestamp.valueOf("2026-12-31 23:59:59"));
-        r.put("APPTENDTIMEDUR", "30.4");
-        r.put("USERFIELD_1", "db1");
-        r.put("USERFIELD_5", "db5");
-        return r;
+    private CopOfferKafkaData dbRow() {
+        return dbRow("30.4");
+    }
+
+    private CopOfferKafkaData dbRow(String duracion) {
+        List<String> userFields = new ArrayList<>();
+        for (int i = 1; i <= 100; i++) userFields.add(null);
+        userFields.set(0, "db1");     // USERFIELD_1
+        userFields.set(4, "db5");     // USERFIELD_5
+        return new CopOfferKafkaData("CAT1", "T", "R1", "motivo", "producto", "FP1", userFields,
+                START, duracion, Timestamp.valueOf("2026-12-31 23:59:59"), Timestamp.valueOf("2026-01-01 00:00:00"),
+                "P1", "F1", "Y");
     }
 
     private JsonNode publicado() throws Exception {
@@ -204,9 +200,7 @@ class FulFillkafkaSenderTest {
 
     @Test
     void appointmentMinDur_soloSiEsMayorQueCero() throws Exception {
-        Map<String, Object> row = dbRow();
-        row.put("APPTENDTIMEDUR", "0");
-        when(repository.find(eq(WAVE_KEY), anyString())).thenReturn(Optional.of(row));
+        when(repository.find(eq(WAVE_KEY), anyString())).thenReturn(Optional.of(dbRow("0")));
         sender.process(input());
         assertThat(publicado().get("event").get("body").has("AppointmentMinDur")).isFalse();
     }

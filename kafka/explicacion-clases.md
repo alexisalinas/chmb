@@ -139,13 +139,23 @@ Se dispara al final de `OpUpdateOffer`, después de la respuesta del EMS, y **nu
 | `FulFillkafkaSender.process` | Pasos 1–5: espera `delay-ms`, consulta la BD, ensambla, aplica reglas y publica; reintenta solo fallas de infraestructura. | `/BW/Kafka/FulFillKafkaSender`. |
 | `FulFillkafkaSender.assemble` | Arma `{event:{header,body}}`; `CustomerNo` a 9 dígitos después de la consulta, `AppointmentMinDur` solo si > 0, `timeStamp` siempre actual, UserFields de la BD. | Mapper + `Render JSON`. |
 | `OfferKeyBuilder` | Claves `off:mx:…` (RefID y OFFPAL.EXTID$) y `wvch:…` (WAVCH.EXTID$). | Concatenaciones de `DataFetch`. |
-| `OfferDataRepository.find` | Un SELECT con parámetros preparados (timeout 10 s, 100 filas, usa la primera). | `/BW/Kafka/DataFetch` (JDBC Query). |
-| `CitiDataStore` / `CitiDataStoreConfig` | Conexión dedicada opcional (`offer.kafka.datasource.*`); si no, usa `spring.datasource`. | Conexión `CitiDataStore`. |
+| `OfferDataClient.find` | Llama a la librería `cops-bd` (`CopOfferKafkaService`) y toma la primera fila; si la librería o la BD no están, lanza error (se reintenta). | `/BW/Kafka/DataFetch` (JDBC Query). |
+| *(librería cops-bd)* `CopOfferKafkaData`, `CopOfferKafkaNatives`, `CopOfferKafkaRepository`, `CopOfferKafkaService(Impl)` | Modelo, SQL (con 100 UserFields), JDBC con timeout 10 s y 100 filas, servicio. Se registran en `CopsDbAutoConfiguration`. | Conexión y query de `CitiDataStore`. |
 | `OfferPublisher` → `DryRunOfferPublisher`, `JmsOfferPublisher` (y `KafkaOfferPublisher` opcional) | Paso 5: publica `{RefId, jsonString}`. `dry-run` solo escribe en el log. | **JMS Queue Sender `KafkaMsgSender`** (cola que lee el bridge). |
 | `KafkaMetrics` | Contadores: enviados, sin filas, inválidos, fallidos, rechazados. | — |
 | `OfferKafkaProps` | Propiedades `offer.kafka.*`. | Globales `COP/Kafka/...`. |
 
 Códigos del log: `KAFKA-SENT`, `KAFKA-NO-ROWS`, `KAFKA-INVALID`, `KAFKA-RETRY`, `KAFKA-ERROR`, `KAFKA-REJECTED`, `KAFKA-MULTI-ROWS`.
+
+## Notación de los DTOs (esquemas de BW)
+
+| Símbolo en TIBCO | Significa | En Java |
+|---|---|---|
+| *(ninguno)* | obligatorio | `@NotBlank` (texto) o `@NotNull` (objeto, fecha, o texto que puede ir vacío como los `...Status`) |
+| `?` | opcional | sin anotación |
+| `*` | lista | `List<…>` con `@NotNull @Valid`, inicializada vacía; cada elemento se valida |
+
+Las pruebas de estas reglas están en `DtoValidationTest`.
 
 ## 4. Equivalencia de nombres
 

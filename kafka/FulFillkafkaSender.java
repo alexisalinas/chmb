@@ -1,7 +1,8 @@
 package com.banamex.cops.update_offer.sender;
 
+import com.banamex.cops.app.model.CopOfferKafkaData;
 import com.banamex.cops.update_offer.kafka.KafkaMetrics;
-import com.banamex.cops.update_offer.kafka.OfferDataRepository;
+import com.banamex.cops.update_offer.kafka.OfferDataClient;
 import com.banamex.cops.update_offer.kafka.OfferInput;
 import com.banamex.cops.update_offer.kafka.OfferKafkaProps;
 import com.banamex.cops.update_offer.kafka.OfferKeyBuilder;
@@ -18,6 +19,7 @@ import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -35,18 +37,18 @@ public class FulFillkafkaSender {
 
     private final OfferKafkaProps props;
     private final OfferKeyBuilder keys;
-    private final OfferDataRepository repository;
+    private final OfferDataClient dataClient;
     private final OfferPublisher publisher;
     private final JsonMapper mapper;
     private final KafkaMetrics metrics;
     private final TaskExecutor executor;
 
-    public FulFillkafkaSender(OfferKafkaProps props, OfferKeyBuilder keys, OfferDataRepository repository,
+    public FulFillkafkaSender(OfferKafkaProps props, OfferKeyBuilder keys, OfferDataClient dataClient,
                               OfferPublisher publisher, JsonMapper mapper, KafkaMetrics metrics,
                               @Qualifier("fulFillKafkaExecutor") TaskExecutor executor) {
         this.props = props;
         this.keys = keys;
-        this.repository = repository;
+        this.dataClient = dataClient;
         this.publisher = publisher;
         this.mapper = mapper;
         this.metrics = metrics;
@@ -78,7 +80,7 @@ public class FulFillkafkaSender {
             }
             String waveKey = keys.waveKey(in.getWaveId(), in.getChannel());
             String offerKey = in.getRefId();                            // misma clave que OFFPAL.EXTID$
-            Optional<Map<String, Object>> db = retry("consulta a la BD", () -> repository.find(waveKey, offerKey)); // paso 2
+            Optional<CopOfferKafkaData> db = retry("consulta a la BD", () -> dataClient.find(waveKey, offerKey)); // paso 2
             if (db.isEmpty()) {
                 metrics.incNoRows();
                 log.error("KAFKA-NO-ROWS uuid={} refId={} waveKey={} offerKey={}",
@@ -101,7 +103,7 @@ public class FulFillkafkaSender {
     // ------------------------------------------------------------------ pasos 3 y 4
 
     /** Ensambla header y body; el resultado se serializa como { "event": { "header": …, "body": … } }. */
-    Map<String, Object> assemble(OfferInput in, Map<String, Object> db) {
+    Map<String, Object> assemble(OfferInput in, CopOfferKafkaData db) {
         String now = OffsetDateTime.now().toString();
 
         Map<String, Object> header = new LinkedHashMap<>();
@@ -129,25 +131,26 @@ public class FulFillkafkaSender {
         body.put("ResponseCode", in.getResponseCode());
         body.put("ResponseText", in.getResponseText());
 
-        // Datos de la BD
-        body.put("ReasonCode", db.get("REASONCODE"));
-        body.put("ReasonDesc", db.get("REASONDESC"));
-        body.put("ProductType", db.get("PRDTYPE"));
-        body.put("ProductDescription", db.get("DESCRIPTION"));
-        body.put("ProductCode", db.get("PRDCODE"));
-        body.put("ProductFamily", db.get("PRDFAMILY"));
-        body.put("CategoryID", db.get("CRPCATEGORYID"));
-        body.put("FulfillmentProcID", db.get("FULFILLMENTPROCID"));
-        body.put("Availability", db.get("AVAILABILITY"));
-        body.put("AppointmentStartDate", iso(db.get("APPTSTARTDATE_TM")));
-        body.put("ExpiryDate", iso(db.get("EXPIRYDATE_TM")));
-        body.put("OfferCreationDate", iso(db.get("OFFERCREATIONDATE_TM")));
-        int minutes = toMinutes(db.get("APPTENDTIMEDUR"));
+        // Datos de la BD (librería cops-bd)
+        body.put("ReasonCode", db.reasonCode());
+        body.put("ReasonDesc", db.reasonDesc());
+        body.put("ProductType", db.prdType());
+        body.put("ProductDescription", db.prdDescription());
+        body.put("ProductCode", db.prdCode());
+        body.put("ProductFamily", db.prdFamily());
+        body.put("CategoryID", db.crpCategoryId());
+        body.put("FulfillmentProcID", db.fulfillmentProcId());
+        body.put("Availability", db.availability());
+        body.put("AppointmentStartDate", iso(db.apptStartDate()));
+        body.put("ExpiryDate", iso(db.expiryDate()));
+        body.put("OfferCreationDate", iso(db.offerCreationDate()));
+        int minutes = toMinutes(db.apptEndTimeDur());
         if (minutes > 0) {                                               // solo si es mayor que cero
             body.put("AppointmentMinDur", minutes);
         }
+        List<String> userFields = db.userFields();                        // índice 0 = USERFIELD_1
         for (int i = 1; i <= 100; i++) {
-            body.put("UserField" + i, db.get("USERFIELD_" + i));         // los de la BD pisan a los de la entrada
+            body.put("UserField" + i, userFields != null && i <= userFields.size() ? userFields.get(i - 1) : null);
         }
 
         if (props.isOmitNulls()) {
