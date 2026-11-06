@@ -1,0 +1,54 @@
+TPA VDI - CONNECTIVITY REQUEST
+Questions and Answers
+
+1. ERROR SCREENSHOTS
+
+Answer:
+Attached in the email body. The issue happens in the STS IDE (Spring Tool Suite) when running a Maven build. The pop-up shows the following:
+   - Blocked app: WHERE NODE
+   - Location: %DirectoryName%
+   - User name: as82906
+   - System name: H18GAAFT23P0009
+At the same time, the Maven build fails with a MojoExecutionException.
+
+2. SOEIDs (2-3) OF TEAM MEMBERS WHO CAN ACCESS THE SAME APPLICATION
+   (same business/vendor/environment/domain, Non-Employees with NE tag)
+
+Answer:
+[SOEID 1], [SOEID 2], [SOEID 3]
+
+3. SOEID OF USERS AFFECTED
+
+Answer:
+as82906 [add others if any]
+
+4. DOMAIN (NA / EUR / ASPAC)
+
+Answer:
+LAC (Latin America)
+
+5. TPA ACTIVE DIRECTORY GROUP NAME (if aware)
+
+Answer:
+[Group name, or "Not known"]
+
+6. VENDOR FOR WHICH YOU WORK (e.g. TCS, Wipro, L&T, Oracle)
+
+Answer:
+[Your company]
+
+7. WORK LOCATION (Citi location or Non-Citi location)
+
+Answer:
+[Citi location / Non-Citi location]
+
+8. FULL NAME OR HOST NAME OF YOUR COMPUTER (including domain)
+
+Answer:
+H18GAAFT23P0009 [add domain, e.g. H18GAAFT23P0009.domain.com]
+
+9. AUDIT LOGS
+   (C:\AppSenseLogs\Auditing\ApplicationManagerEvents_...csv)
+
+Answer:
+Attached to this email. The file was generated right after reproducing the block.
