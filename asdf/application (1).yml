@@ -1,0 +1,253 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: servlet
+    lazy-initialization: true                 # el EMS se conecta al primer uso
+  datasource:
+    url: ${DB_URL:jdbc:oracle:thin:@//MXCPO2U.oraas.dyn.nsroot.net:8889/MXCPO2U}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${DB_USER:RMXCOP4}
+    password: ${DB_PASSWORD:c4D6zdL8}         # la variable de entorno DB_PASSWORD tiene prioridad
+    hikari:
+      initialization-fail-timeout: -1
+      connection-timeout: 5000
+      minimum-idle: 0                         # sin reintentos en segundo plano
+      maximum-pool-size: 5
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    properties:
+      hibernate:
+        boot:
+          allow_jdbc_metadata_access: false
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  application:
+    name: chnn-cop-o-update-offer
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+CONSUMER_APP: chnn-cop-o-update-offer
+
+eureka:
+  client:
+    enabled: false
+
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+    metrics:
+      enabled: true
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: '*'
+  health:
+    default:
+      enabled: true
+
+digital-engineering:
+  exception:
+    handler:
+      global:
+        enabled: 'true'
+  logger:
+    headers:
+      enabled: 'true'
+
+logging:
+  pattern:
+    level: '[%X{data}%thread] [%X{X-B3-TraceId:-}] - %5p'
+  level:
+    org.springframework.web: DEBUG
+    com.banamex.cops: DEBUG
+    com.tibco: DEBUG
+
+update-offer:
+  ems:
+    queue: citi.gcg.la.cop_163621.mx_card.offer.update
+    timeout-seconds: 7
+    dry-run: false                            # true = solo escribe en el log, no envía
+    message-format: both                      # both | properties | xml
+    log-properties: false                     # true = muestra cada propiedad en el log
+    event-namespace: www.tibco.com/be/ontology/OfferEngine/Events/UpdateOffer
+    time-to-live-ms: 0                        # 0 = no expira
+    body-element: UpdateOffer
+    envelope: false
+    xml-namespace: false
+  jms-requestor:
+    customer-padding: false
+    customer-padding-length: 19
+    customer-padding-char: "0"
+  ab-initio-test: "N"
+  response:
+    source: micro                             # micro | ems
+    success-code: COP_UPDOF_0
+    success-text: "Successfully update offer {dateTime}"
+    error-code: ERROR
+    error-text: "Error update offer {dateTime}. Falló en {step}: {detail}"
+    date-format: "yyyy/MM/dd HH:mm:ss"
+    status-u-bw-format: true
+    status-u-success-code: COP_UPDOF_0
+    status-u-success-text: "Successfully update offer {offerKey}"
+    status-u-campaign-missing-code: COP_UPDOF_432
+    status-u-campaign-missing-text: "Campaign cmp: {campaignId} is not present cannot proceed with the Update Offer"
+    kafka-success-text: "Successfully send offer to {destination} {dateTime}"
+    kafka-disabled-text: "Envío del evento desactivado: no hay destino activo {dateTime}"
+    kafka-dry-run-text: "{destination} en dry-run: el mensaje no se publicó {dateTime}"
+    kafka-error-text: "Error send offer to {destination} {dateTime}. Falló en {step}: {detail}"
+  timezone:
+    translate-time-zone: true                 # false = no convierte la zona horaria
+    sys-mode: RealTime
+    invalid-code: COP_TZCOD_115
+    be-time-format: "HH:mm:ss"
+    be-date-time-format: "yyyy-MM-dd HH:mm:ss"
+    ecrm-time-zone: US/Central
+    time-zone-date-time-format: "yyyy-MM-dd'T'HH:mm:ssZ"
+audit:
+  points-enabled: "1001"                      # posición 1: request, posición 4: respuesta
+
+cop:
+  suppression:
+    check-for-suppression: "N"                # "Y" activa la supresión
+    query-timeout-seconds: 30
+    max-rows: 0
+
+digital-integration:
+  messaging:
+    jms:
+      broker-config:
+        username: "rmx_uat_usr"
+        password: "rmxusr"
+        sessionCacheSize: 10
+        receiveTimeout: 30000
+        ssl:
+          identity: "C:/Users/AS82906/certs/rmx_uat_usr.ca1.cert.p12"
+          identityEncoding: "PKCS12"
+          password: "rmxusr"
+          debugTrace: false
+          trace: false
+          vendor: "j2se"
+          enableVerifyHost: false             # solo pruebas
+          enableVerifyHostName: false
+      platforms:
+        - platformId: "banamex-cops"
+          enabled: true
+          primary: 1
+          contingency: 0
+          connections:
+            - id: "ems-update-offer-1"
+              datacenter: 10
+              readyToServe: true
+              name: "EmsConnectionUpdateOffer"
+              jmsTemplateName: "updateOfferJmsTemplate"  # debe coincidir con el @Bean de JmsConfig
+              brokerUrl: "ssl://mwlgc-tibla18u.lac.nsroot.net:45143"
+              username: ${digital-integration.messaging.jms.broker-config.username}
+              password: ${digital-integration.messaging.jms.broker-config.password}
+              sessionCacheSize: ${digital-integration.messaging.jms.broker-config.sessionCacheSize}
+              receiveTimeout: ${digital-integration.messaging.jms.broker-config.receiveTimeout}
+              connAttemptCount: 3
+              connAttemptDelay: 1000
+              connAttemptTimeout: 5000
+              reconnAttemptCount: 3
+              reconnAttemptDelay: 1000
+              reconnAttemptTimeout: 5000
+              ssl:
+                identity: ${digital-integration.messaging.jms.broker-config.ssl.identity}
+                identityEncoding: ${digital-integration.messaging.jms.broker-config.ssl.identityEncoding}
+                password: ${digital-integration.messaging.jms.broker-config.ssl.password}
+                debugTrace: ${digital-integration.messaging.jms.broker-config.ssl.debugTrace}
+                trace: ${digital-integration.messaging.jms.broker-config.ssl.trace}
+                vendor: ${digital-integration.messaging.jms.broker-config.ssl.vendor}
+                enableVerifyHost: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHost}
+                enableVerifyHostName: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHostName}
+        - platformId: "banamex-cops-alterno"
+          enabled: ${offer.alternate-ems.enabled}
+          primary: 1
+          contingency: 0
+          connections:
+            - id: "ems-alterno-1"
+              datacenter: 10
+              readyToServe: ${offer.alternate-ems.enabled}
+              name: "EmsConnectionAlternate"
+              jmsTemplateName: ${offer.alternate-ems.jms-template-name}
+              brokerUrl: ${digital-integration.messaging.jms.platforms[0].connections[0].brokerUrl}   # mismo EMS, usuario y certificado que la conexión principal
+              username: ${digital-integration.messaging.jms.broker-config.username}
+              password: ${digital-integration.messaging.jms.broker-config.password}
+              sessionCacheSize: ${digital-integration.messaging.jms.broker-config.sessionCacheSize}
+              receiveTimeout: ${digital-integration.messaging.jms.broker-config.receiveTimeout}
+              connAttemptCount: 3
+              connAttemptDelay: 1000
+              connAttemptTimeout: 5000
+              reconnAttemptCount: 3
+              reconnAttemptDelay: 1000
+              reconnAttemptTimeout: 5000
+              ssl:
+                identity: ${digital-integration.messaging.jms.broker-config.ssl.identity}
+                identityEncoding: ${digital-integration.messaging.jms.broker-config.ssl.identityEncoding}
+                password: ${digital-integration.messaging.jms.broker-config.ssl.password}
+                debugTrace: ${digital-integration.messaging.jms.broker-config.ssl.debugTrace}
+                trace: ${digital-integration.messaging.jms.broker-config.ssl.trace}
+                vendor: ${digital-integration.messaging.jms.broker-config.ssl.vendor}
+                enableVerifyHost: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHost}
+                enableVerifyHostName: ${digital-integration.messaging.jms.broker-config.ssl.enableVerifyHostName}
+      queues-config:
+        - platformId: "banamex-cops"
+          post:
+            - csi: 10
+              queues:
+                - channel: update-offer
+                  queue:
+                    - send: ${update-offer.ems.queue}
+                - channel: kafka
+                  queue:
+                    - send: ${offer.kafka.queue}
+        - platformId: "banamex-cops-alterno"
+          post:
+            - csi: 10
+              queues:
+                - channel: alternate-ems
+                  queue:
+                    - send: ${offer.alternate-ems.queue}
+    security:
+      allowed-ip-addresses: "0:0:0:0:0:0:0:1,10.0.0.0/8,127.0.0.1"
+      path-secured: /api/private/v1/information-technologies/ems/messages/connector/**
+      actuator-path: /actuator/**
+
+offer:
+  kafka:
+    enabled: true
+    mode: jms                                 # jms | dry-run (dry-run: solo log, en todos los destinos)
+    bridge-enabled: false                     # true = envía a la cola del bridge de Kafka
+    send-without-db-rows: true                # true = si la consulta no trae la oferta, envía igual con los campos de la BD vacíos
+    delay-ms: 200
+    queue: citi.gcg.la.cop_163621.MX_dm.raw.cops-offer-fulfillment-req
+    message-format: json                      # json | envelope
+    topic: CAMBIAR_TOPICO
+    offer-prefix: "off:mx:"
+    wave-prefix: "wvch:"
+    key-separator: ":"
+    omit-nulls: true
+    mask-card-number: false
+    max-attempts: 3
+    retry-backoff-ms: 500
+    time-to-live-ms: ${update-offer.ems.time-to-live-ms:0}
+    producer-csi: "163621"
+    event-name: Updateofferrequest
+    event-version: "1.0"
+    country-code: MX
+    business-code: DM
+    executor-core-size: 2
+    executor-max-size: 4
+    executor-queue-capacity: 100
+  alternate-ems:
+    enabled: true                             # true = envía el evento (JSON) a la cola del EMS alterno
+    jms-template-name: alternateEmsJmsTemplate  # igual al jmsTemplateName de su conexión
+    queue: citi.gcg.la.cop_163621.MX_dm.raw.cops-offer-fulfillment-req   # la misma de offer.kafka.queue: no prendas los dos a la vez
+    message-format: json                      # json | envelope
+    time-to-live-ms: 0
