@@ -1,0 +1,31 @@
+[
+  {
+    "channelCode": "CAT",
+    "campaignId": "DYNMCBIRTHWELC",
+    "waveId": "DUNIUWPEMQ",
+    "customerId": "023810810",
+    "offerStatus": "H",
+    "offerActionCode": "UPD",
+    "reasonCode": "R01",
+    "reasonDescription": "Prueba",
+    "appointmentDate": "2026-10-25",
+    "appointmentStartTime": "10:30:00",
+    "appointmentEndTime": "11:00:00",
+    "offerSource": "WEB",
+    "offerPriority": "1",
+    "assignedBy": "USER1",
+    "assignedTo": "AGENT1",
+    "offeredNumber": "Y",
+    "comments": "Comentario de prueba",
+    "contactIndicatorNumber": "5555555555",
+    "customerReferenceNumber": "REF123",
+    "schemaVersion": "1.0",
+    "contactType": "PHONE",
+    "departmentName": "COPS",
+    "userText": "{\"userField1\":\"valor 1\",\"userField2\":\"valor 2\",\"userField30\":\"valor 30\",\"userField100\":\"valor 100\"}",
+    "contextType": [
+      { "contextType": "controlField1" },
+      { "contextType": "controlField2" }
+    ]
+  }
+]
