@@ -1,0 +1,47 @@
+CONSULTA DE CAMPANAS (UAT_COPS, esquema RMXCOP4)
+================================================
+Para ver por que el EMS contesta que la campana no esta presente.
+El backend dice "Campaign cmp: <id> is not present": busca la campana con su propia clave
+(probablemente cmp:<id>). Estas consultas muestran como esta guardada la campana en la BD.
+Corre cada bloque por separado y pegame el resultado.
+
+
+----------------------------------------------------------------
+1) Columnas de D_CAMPAIGN (para saber que mas guarda: estado, fechas, clave)
+----------------------------------------------------------------
+SELECT column_name, data_type
+  FROM all_tab_columns
+ WHERE table_name = 'D_CAMPAIGN'
+ ORDER BY column_id;
+
+
+----------------------------------------------------------------
+2) La campana CLI: claves y producto (solo columnas de identificacion)
+----------------------------------------------------------------
+SELECT EXTID$, CMPID, PRDCODE, PRDTYPE, FULFILLMENTPROCID
+  FROM D_CAMPAIGN
+ WHERE CMPID = 'CLI';
+
+
+----------------------------------------------------------------
+3) Como se escriben las claves de campana en la BD (formato real de EXTID$)
+----------------------------------------------------------------
+SELECT EXTID$, CMPID
+  FROM D_CAMPAIGN
+ WHERE ROWNUM <= 30;
+
+
+----------------------------------------------------------------
+4) Campanas que tienen ofertas (las que si se pueden probar contra el EMS)
+----------------------------------------------------------------
+SELECT CAMPAIGNID, COUNT(*) AS ofertas
+  FROM (SELECT CAMPAIGNID FROM D_OFFERPALETTE ORDER BY OFFERCREATIONDATE_TM DESC)
+ WHERE ROWNUM <= 5000
+ GROUP BY CAMPAIGNID
+ ORDER BY ofertas DESC;
+
+
+----------------------------------------------------------------
+5) Buscar una campana por parte del nombre
+----------------------------------------------------------------
+SELECT EXTID$, CMPID FROM D_CAMPAIGN WHERE UPPER(CMPID) LIKE '%CLI%';
