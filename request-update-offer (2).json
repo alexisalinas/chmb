@@ -1,0 +1,32 @@
+[
+  {
+    "channelCode": "ATM",
+    "campaignId": "CLI",
+    "waveId": "EDVBY3IC8M0",
+    "customerId": "008457674",
+    "offerStatus": "G",
+    "offerActionCode": "UPD",
+    "appointmentDate": "2022-10-28",
+    "appointmentStartTime": "10:42:00",
+    "appointmentEndTime": "11:55:00",
+    "offerSource": "WEB",
+    "offerPriority": "1",
+    "assignedBy": "USER1",
+    "assignedTo": "AGENT1",
+    "offeredNumber": "Y",
+    "comments": "Comentario de prueba",
+    "contactIndicatorNumber": "5555555555",
+    "customerReferenceNumber": "REF123",
+    "schemaVersion": "1.0",
+    "contactType": "PHONE",
+    "departmentName": "COPS",
+    "contextType": [
+      {
+        "contextType": "controlField1"
+      },
+      {
+        "contextType": "controlField2"
+      }
+    ]
+  }
+]
