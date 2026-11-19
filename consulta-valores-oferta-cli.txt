@@ -1,0 +1,21 @@
+VALORES DE LA OFERTA CLI / EDVBY3IC8M0 / 008457674 EN LA BD (UAT_COPS, esquema RMXCOP4)
+=======================================================================================
+Sirven para llenar en el rq los campos que si existen en el request:
+reasonCode, reasonDescription, appointmentDate/StartTime/EndTime y userText (UserFields).
+Corre cada bloque por separado y pegame el resultado.
+
+offer_key = off:mx:CLI:EDVBY3IC8M0:008457674
+
+
+----------------------------------------------------------------
+1) Motivos y cita
+----------------------------------------------------------------
+SELECT o.REASONCODE, o.REASONDESC, o.APPTSTARTDATE_TM, o.APPTENDDATE_TM
+  FROM D_OFFERPALETTE o
+ WHERE o.EXTID$ = 'off:mx:CLI:EDVBY3IC8M0:008457674';
+
+
+----------------------------------------------------------------
+2) Toda la fila de la oferta (incluye los UserField 1 a 100)
+----------------------------------------------------------------
+SELECT * FROM D_OFFERPALETTE WHERE EXTID$ = 'off:mx:CLI:EDVBY3IC8M0:008457674';
