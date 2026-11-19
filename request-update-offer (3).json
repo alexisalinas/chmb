@@ -1,0 +1,33 @@
+[
+  {
+    "channelCode": "ATM",
+    "campaignId": "CLI",
+    "waveId": "EDVBY3IC8M0",
+    "customerId": "008457674",
+    "offerStatus": "G",
+    "offerActionCode": "UPD",
+    "appointmentDate": "2022-10-28",
+    "appointmentStartTime": "10:42:00",
+    "appointmentEndTime": "11:55:00",
+    "offerSource": "WEB",
+    "offerPriority": "1",
+    "assignedBy": "USER1",
+    "assignedTo": "AGENT1",
+    "offeredNumber": "Y",
+    "comments": "Comentario de prueba",
+    "contactIndicatorNumber": "5555555555",
+    "customerReferenceNumber": "REF123",
+    "schemaVersion": "1.0",
+    "contactType": "PHONE",
+    "departmentName": "COPS",
+    "userText": "{\"userField1\": \"11\", \"userField2\": \"12\", \"userField3\": \"3\", \"userField4\": \"4\", \"userField5\": \"5\", \"userField6\": \"6\", \"userField7\": \"17\", \"userField8\": \"18\", \"userField9\": \"9\", \"userField10\": \"10\", \"userField99\": \"99\", \"userField100\": \"100\"}",
+    "contextType": [
+      {
+        "contextType": "controlField1"
+      },
+      {
+        "contextType": "controlField2"
+      }
+    ]
+  }
+]
