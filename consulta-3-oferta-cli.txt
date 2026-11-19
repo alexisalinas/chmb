@@ -1,0 +1,34 @@
+CONSULTA 3 - OFERTA CLI / EDVBY3IC8M0 / 008457674 (UAT_COPS, esquema RMXCOP4)
+==============================================================================
+Corre cada bloque por separado.
+
+offer_key = off:mx:CLI:EDVBY3IC8M0:008457674
+wave_key  = wvch:EDVBY3IC8M0:ATM  (tambien existen :BRANCH y :CBOL)
+
+
+----------------------------------------------------------------
+3a) Revision por partes: donde se rompe el join (filas = 0 es lo que falta)
+----------------------------------------------------------------
+SELECT 'campana en D_CAMPAIGN' AS revisa, COUNT(*) AS filas
+  FROM D_CAMPAIGN WHERE CMPID = 'CLI'
+UNION ALL SELECT 'producto de la campana', COUNT(*)
+  FROM D_CAMPAIGN c JOIN D_PRODUCT p ON c.PRDCODE = p.PRDCODE WHERE c.CMPID = 'CLI'
+UNION ALL SELECT 'oferta exacta', COUNT(*)
+  FROM D_OFFERPALETTE WHERE EXTID$ = 'off:mx:CLI:EDVBY3IC8M0:008457674'
+UNION ALL SELECT 'ola ATM', COUNT(*)
+  FROM D_WAVECHINFO WHERE EXTID$ = 'wvch:EDVBY3IC8M0:ATM'
+UNION ALL SELECT 'ola BRANCH', COUNT(*)
+  FROM D_WAVECHINFO WHERE EXTID$ = 'wvch:EDVBY3IC8M0:BRANCH'
+UNION ALL SELECT 'ola CBOL', COUNT(*)
+  FROM D_WAVECHINFO WHERE EXTID$ = 'wvch:EDVBY3IC8M0:CBOL';
+
+
+----------------------------------------------------------------
+3b) Consulta completa de DataFetch (debe dar filas = 1 para ATM)
+----------------------------------------------------------------
+SELECT COUNT(*) AS filas
+  FROM D_OFFERPALETTE, D_CAMPAIGN, D_PRODUCT, D_WAVECHINFO
+ WHERE D_OFFERPALETTE.CAMPAIGNID = D_CAMPAIGN.CMPID
+   AND D_CAMPAIGN.PRDCODE = D_PRODUCT.PRDCODE
+   AND D_WAVECHINFO.EXTID$ = 'wvch:EDVBY3IC8M0:ATM'
+   AND D_OFFERPALETTE.EXTID$ = 'off:mx:CLI:EDVBY3IC8M0:008457674';
