@@ -1,0 +1,136 @@
+CONSULTAS PARA REVISAR EL CUERPO DE KAFKA EN LA BD (Oracle UAT)
+================================================================
+Corre cada bloque por separado en tu cliente SQL, con la conexion del yml.
+Las tablas y columnas son las de la consulta que ya ejecuta el micro
+(D_OFFERPALETTE, D_CAMPAIGN, D_PRODUCT, D_WAVECHINFO).
+Si las tablas estan en otro esquema, antepon el dueno (ESQUEMA.D_CAMPAIGN).
+Si alguna marca ORA-00904 / ORA-00942, corre antes el bloque 0.
+
+Claves que arma el micro:
+  offer_key = off:mx:CAMPANA:OLA:CLIENTE[:CUENTA]     -> D_OFFERPALETTE.EXTID$   (la tarjeta no va)
+  wave_key  = wvch:OLA:CANAL                          -> D_WAVECHINFO.EXTID$     (CANAL = channelCode del rq)
+
+
+----------------------------------------------------------------
+0) SOLO SI ALGO FALLA: esquema y columnas reales
+----------------------------------------------------------------
+-- 0a) En que esquema estan las tablas
+SELECT owner, table_name
+  FROM all_tables
+ WHERE table_name IN ('D_CAMPAIGN', 'D_OFFERPALETTE', 'D_WAVECHINFO', 'D_PRODUCT');
+
+-- 0b) Nombres y tipos reales de las columnas
+SELECT table_name, column_name, data_type, data_length, nullable
+  FROM all_tab_columns
+ WHERE table_name IN ('D_OFFERPALETTE', 'D_CAMPAIGN', 'D_PRODUCT', 'D_WAVECHINFO')
+ ORDER BY table_name, column_name;
+
+
+----------------------------------------------------------------
+1) OFERTAS REALES QUE SI TRAEN TODO (para armar el rq)
+----------------------------------------------------------------
+-- Ultimas ofertas con campana, producto y ola. Cada fila ya viene separada en
+-- los datos del request: campaign_id, wave_id, channel (= channelCode),
+-- customer_id y account_number. Pegame las filas que salgan.
+WITH o AS (
+  SELECT * FROM (SELECT EXTID$, CAMPAIGNID, OFFERCREATIONDATE_TM
+                   FROM D_OFFERPALETTE
+                  ORDER BY OFFERCREATIONDATE_TM DESC)
+   WHERE ROWNUM <= 200)
+SELECT * FROM (
+  SELECT o.EXTID$                                   AS offer_key,
+         REGEXP_SUBSTR(o.EXTID$, '[^:]+', 1, 3)     AS campaign_id,
+         REGEXP_SUBSTR(o.EXTID$, '[^:]+', 1, 4)     AS wave_id,
+         REGEXP_SUBSTR(w.EXTID$, '[^:]+', 1, 3)     AS channel,
+         REGEXP_SUBSTR(o.EXTID$, '[^:]+', 1, 5)     AS customer_id,
+         REGEXP_SUBSTR(o.EXTID$, '[^:]+', 1, 6)     AS account_number,
+         w.EXTID$                                   AS wave_key
+    FROM o
+    JOIN D_CAMPAIGN   c ON o.CAMPAIGNID = c.CMPID
+    JOIN D_PRODUCT    p ON c.PRDCODE    = p.PRDCODE
+    JOIN D_WAVECHINFO w ON w.EXTID$ LIKE '%:' || REGEXP_SUBSTR(o.EXTID$, '[^:]+', 1, 4) || ':%')
+ WHERE ROWNUM <= 10;
+
+
+----------------------------------------------------------------
+2) CUERPO COMPLETO DE KAFKA DE UNA OFERTA (valores que salen de la BD)
+----------------------------------------------------------------
+-- Pon :wave_key y :offer_key con los de la consulta 1.
+-- Ejemplo: :wave_key = wvch:OLA:CANAL      :offer_key = off:mx:CAMP:OLA:CLIENTE
+-- Los alias son los nombres del JSON del evento.
+SELECT w.CRPCATEGORYID     AS "CRP_Category_ID",
+       c.PRDTYPE           AS "ID_ProductType",
+       p.DESCRIPTION       AS "Product_Description",
+       o.REASONCODE        AS "Reason_Code",
+       o.REASONDESC        AS "Reason_Description",
+       c.FULFILLMENTPROCID AS "FulfillmentID",
+       o.APPTSTARTDATE_TM  AS "AppointmentDate",
+       to_char((o.APPTENDDATE_TM - o.APPTSTARTDATE_TM) * 1440) AS "AppointmentMinDur",
+       o.EXPIRYDATE_TM        AS "OfferExpiryDate",
+       o.OFFERCREATIONDATE_TM AS "OfferStartDate",
+       p.PRDCODE           AS "PrdCode",
+       p.PRDFAMILY         AS "PrdFamily",
+       o.AVAILABILITY      AS "Availability"
+  FROM D_OFFERPALETTE o, D_CAMPAIGN c, D_PRODUCT p, D_WAVECHINFO w
+ WHERE o.CAMPAIGNID = c.CMPID
+   AND c.PRDCODE    = p.PRDCODE
+   AND w.EXTID$     = :wave_key
+   AND o.EXTID$     = :offer_key;
+
+-- 2b) Los 100 UserField (y todo lo demas) de esa misma oferta
+SELECT * FROM D_OFFERPALETTE WHERE EXTID$ = :offer_key;
+
+-- 2c) Cuantas filas devuelve la consulta del micro (debe ser 1; 0 = KAFKA-NO-ROWS)
+SELECT COUNT(*) AS filas
+  FROM D_OFFERPALETTE, D_CAMPAIGN, D_PRODUCT, D_WAVECHINFO
+ WHERE D_OFFERPALETTE.CAMPAIGNID = D_CAMPAIGN.CMPID
+   AND D_CAMPAIGN.PRDCODE = D_PRODUCT.PRDCODE
+   AND D_WAVECHINFO.EXTID$ = :wave_key
+   AND D_OFFERPALETTE.EXTID$ = :offer_key;
+
+
+----------------------------------------------------------------
+3) ¿EXISTEN EN LA BD LOS DATOS DE TUS LOGS?
+----------------------------------------------------------------
+-- 3a) KAFKA-NO-ROWS de DYNMCBIRTHWELC / DUNIUWPEMQ / 023810810 / CAT:
+--     revisa por partes donde se rompe el join (filas = 0 es lo que falta).
+SELECT 'campana en D_CAMPAIGN' AS revisa, COUNT(*) AS filas
+  FROM D_CAMPAIGN WHERE CMPID = 'DYNMCBIRTHWELC'
+UNION ALL SELECT 'producto de la campana', COUNT(*)
+  FROM D_CAMPAIGN c JOIN D_PRODUCT p ON c.PRDCODE = p.PRDCODE WHERE c.CMPID = 'DYNMCBIRTHWELC'
+UNION ALL SELECT 'oferta exacta (off:mx:...)', COUNT(*)
+  FROM D_OFFERPALETTE WHERE EXTID$ = 'off:mx:DYNMCBIRTHWELC:DUNIUWPEMQ:023810810'
+UNION ALL SELECT 'ofertas de esa campana y ola (cualquier cliente)', COUNT(*)
+  FROM D_OFFERPALETTE WHERE EXTID$ LIKE '%DYNMCBIRTHWELC:DUNIUWPEMQ:%'
+UNION ALL SELECT 'ofertas de ese cliente (cualquier prefijo)', COUNT(*)
+  FROM D_OFFERPALETTE WHERE EXTID$ LIKE '%023810810%'
+UNION ALL SELECT 'ola exacta (wvch:OLA:CAT)', COUNT(*)
+  FROM D_WAVECHINFO WHERE EXTID$ = 'wvch:DUNIUWPEMQ:CAT'
+UNION ALL SELECT 'ola con cualquier prefijo o canal', COUNT(*)
+  FROM D_WAVECHINFO WHERE EXTID$ LIKE '%DUNIUWPEMQ%';
+
+-- 3b) Como se llaman realmente esas claves en la BD (prefijo y canal)
+SELECT EXTID$ FROM D_WAVECHINFO   WHERE EXTID$ LIKE '%DUNIUWPEMQ%';
+SELECT EXTID$ FROM D_OFFERPALETTE WHERE EXTID$ LIKE '%023810810%';
+
+-- 3c) Las 7 ofertas de tus logs (la de DYNMCBIRTHWELC y las 6 del log de BW).
+--     oferta y ola en 1 = existe; en 0 = no existe.
+SELECT k.offer_key,
+       (SELECT COUNT(*) FROM D_OFFERPALETTE o WHERE o.EXTID$ = k.offer_key) AS oferta,
+       (SELECT COUNT(*) FROM D_WAVECHINFO  w WHERE w.EXTID$ LIKE '%:' || k.wave_id || ':%') AS ola
+  FROM (SELECT 'off:mx:DYNMCBIRTHWELC:DUNIUWPEMQ:023810810' offer_key, 'DUNIUWPEMQ' wave_id FROM dual
+        UNION ALL SELECT 'off:mx:TOP UP SUCCANDIGI:GSA3FADLQR:000601149', 'GSA3FADLQR' FROM dual
+        UNION ALL SELECT 'off:mx:3 CLICKS 2:GIBP4Q63CV:000601149',        'GIBP4Q63CV' FROM dual
+        UNION ALL SELECT 'off:mx:RETAILRS25:RH52KYVD39:116740699',        'RH52KYVD39' FROM dual
+        UNION ALL SELECT 'off:mx:PAYPIL2026:II8E98ULMK:116764778',        'II8E98ULMK' FROM dual
+        UNION ALL SELECT 'off:mx:OFERTA 5 PIN II:R2IALSY655:157729190',   'R2IALSY655' FROM dual
+        UNION ALL SELECT 'off:mx:INCLINIVR:O2GZYDHD9L:116727374',         'O2GZYDHD9L' FROM dual) k;
+
+
+----------------------------------------------------------------
+QUE ME PASAS PARA ARMAR EL RQ
+----------------------------------------------------------------
+- Las filas de la consulta 1 (o las de 3c con oferta = 1 y ola = 1).
+- El resultado de la 2 de la oferta que elijas, si quieres comparar con el evento.
+- Si la ola esta en la BD con otro prefijo que "wvch:", dimelo: se cambia
+  offer.kafka.wave-prefix en el yml.
