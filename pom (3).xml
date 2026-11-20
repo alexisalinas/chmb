@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.banamex.swe.mafim</groupId>
+        <artifactId>microservices-framework-parent</artifactId>
+        <version>1.0.64</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.banamex.cops</groupId>
+    <artifactId>chnn-cop-o-update-offer</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>chnn-cop-o-update-offer</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>21</java.version>
+
+        <!-- BANAMEX LIBS -->
+        <mafim-u-messaging-connector.version>6.0.0.5</mafim-u-messaging-connector.version>
+        <mafim-u-messaging-connector-ems.version>6.0.0.3</mafim-u-messaging-connector-ems.version>
+        <mafim-u-legacy-mapper.version>6.0.0.6</mafim-u-legacy-mapper.version>
+        <mafim-u-message-management.version>5.0.0.9</mafim-u-message-management.version>
+        <tibco-tibjms.version>8.5.0</tibco-tibjms.version>
+
+        <!-- PLUGINS -->
+        <jacoco.version>0.8.13</jacoco.version>
+        <maven-site-plugin.version>4.0.0-M16</maven-site-plugin.version>
+        <spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
+        <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
+        <maven-pmd-plugin.version>3.26.0</maven-pmd-plugin.version>
+
+        <!-- SONAR -->
+        <sonar.host.url>https://sonarqube04.nam.nsroot.net</sonar.host.url>
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.exclusions>
+            **/UpdateOfferApplication*,
+            **/KafkaExecutorConfig*,
+            **/config/**/*,
+            **/constant/**/*,
+            **/dto/**/*,
+            **/model/**/*
+        </sonar.coverage.exclusions>
+    </properties>
+
+    <dependencies>
+        <!-- Framework Banamex: web, jackson, actuator, observabilidad, aspectj, lombok, bootstrap, eureka -->
+        <dependency>
+            <groupId>com.banamex.swe.mafim</groupId>
+            <artifactId>microservices-framework-starter-rest</artifactId>
+        </dependency>
+
+        <!-- Librerías propias -->
+        <dependency>
+            <groupId>com.banamex.cops</groupId>
+            <artifactId>chnn-cop-lib-operation-db</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Spring (versiones las pone el parent) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jms</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.jms</groupId>
+            <artifactId>jakarta.jms-api</artifactId>
+        </dependency>
+        <!-- reactor-adapter no existe en Artifactory; se excluye (solo sirve para Reactor <-> RxJava) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.projectreactor.addons</groupId>
+                    <artifactId>reactor-adapter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.projectreactor.addons</groupId>
+                    <artifactId>reactor-adapter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- TODO ELIMINAR AL ACTUALIZAR MSF PARENT VERSION (igual que chnn-cop-o-evaluate-formula) -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>4.0.0-M1</version>
+        </dependency>
+
+        <!-- JAXB -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+        </dependency>
+
+        <!-- Connector EMS / MAFIM -->
+        <dependency>
+            <groupId>com.citi.171097.banamex.mafim.u</groupId>
+            <artifactId>mafim-u-messaging-connector-ems</artifactId>
+            <version>${mafim-u-messaging-connector-ems.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.citi.171097.banamex.mafim.u</groupId>
+            <artifactId>mafim-u-messaging-connector</artifactId>
+            <version>${mafim-u-messaging-connector.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.citi.171097.bmx.mafim.u</groupId>
+            <artifactId>mafim-u-digital-banking-legacy-mapper</artifactId>
+            <version>${mafim-u-legacy-mapper.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tools.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.citi.171097.banamex.mafim.u</groupId>
+            <artifactId>mafim-u-digital-banking-message-management</artifactId>
+            <version>${mafim-u-message-management.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tibco.tibrv</groupId>
+            <artifactId>tibco-tibjms</artifactId>
+            <version>${tibco-tibjms.version}</version>
+        </dependency>
+
+        <!-- Dev / Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- @{argLine} trae el agente de JaCoCo; -XX:+EnableDynamicAgentLoading evita el aviso de Mockito en Java 21 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} -XX:+EnableDynamicAgentLoading</argLine>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <configuration>
+                    <destFile>${project.build.directory}/jacoco.exec</destFile>
+                    <excludes>
+                        <exclude>**/UpdateOfferApplication*</exclude>
+                        <exclude>**/KafkaExecutorConfig*</exclude>
+                        <exclude>**/config/**/*</exclude>
+                        <exclude>**/constant/**/*</exclude>
+                        <exclude>**/dto/**/*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>generate-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check-coverage</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>${maven-site-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-maven-plugin.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Max</threshold>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <configuration>
+                    <configLocation>google_checks.xml</configLocation>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>checkstyle</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${maven-pmd-plugin.version}</version>
+                <configuration>
+                    <targetJdk>21</targetJdk>
+                    <linkXRef>false</linkXRef>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>pmd</report>
+                            <report>cpd</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <configuration>
+                    <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
+</project>
